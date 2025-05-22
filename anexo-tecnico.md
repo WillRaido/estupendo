@@ -137,4 +137,130 @@ graph TD
 ```
 
 ---
-_Generado automáticamente por asistencia técnica IA para Esdinamico SAS._
+# 📘 Anexo Técnico - Análisis Modernización Plataforma Esdinamico SAS
+
+## Índice
+
+- [1. Resumen Ejecutivo](#1-resumen-ejecutivo)
+- [2. Preguntas Clave por Sección](#2-preguntas-clave-por-sección)
+- [3. Riesgos y Omisiones Detectadas](#3-riesgos-y-omisiones-detectadas)
+- [4. Diagramas de Arquitectura](#4-diagramas-de-arquitectura)
+- [5. Matriz de Microservicios](#5-matriz-de-microservicios)
+- [6. Recursos AWS Involucrados](#6-recursos-aws-involucrados)
+
+---
+
+## 1. Resumen Ejecutivo
+
+La plataforma de Esdinamico SAS está en proceso de evolución de un sistema monolítico MVC en PHP hacia una arquitectura basada en microservicios sobre AWS. Esta transformación incluye:
+
+- Separación de frontend (Angular) y backend (Node.js/Python con gRPC).
+- Uso intensivo de servicios AWS: EC2, ECS, S3, CloudFront, Mongo Atlas, entre otros.
+- Integración robusta con la DIAN y notificaciones por correo electrónico.
+- Orientación UX mediante Design Thinking y mockups en Figma.
+
+---
+
+## 2. Preguntas Clave por Sección
+
+### Arquitectura Actual
+- ¿Qué tecnologías específicas (frameworks, versiones) se usan actualmente?
+- ¿Cómo se maneja la disponibilidad y el balanceo de carga?
+
+### Microservicios y gRPC
+- ¿Qué patrón de comunicación asincrónica se usará (SQS, EventBridge)?
+- ¿Qué estrategia de migración se seguirá: big bang, por dominio, híbrida?
+
+### Seguridad
+- ¿Se ha considerado el uso de AWS Cognito para autenticación?
+- ¿Cómo se gestionará el versionamiento de APIs y su documentación?
+
+### Frontend Angular
+- ¿Se usan herramientas como Storybook o tests e2e para validación del diseño?
+- ¿Los buckets de S3 estarán en la misma región que la VPC backend?
+
+---
+
+## 3. Riesgos y Omisiones Detectadas
+
+| Área | Riesgo u Omisión |
+|------|------------------|
+| CI/CD | No hay mención a entornos separados o revisión de código en el pipeline. |
+| Testing | No se describen suites de pruebas ni validación de integración. |
+| Costo | No se evalúa impacto económico por uso de recursos AWS escalables. |
+| Monitoreo | No hay mención de herramientas como Datadog, OpenTelemetry o X-Ray. |
+
+---
+
+## 4. Diagramas de Arquitectura
+
+### Diagrama Actual (Simplificado)
+
+```mermaid
+graph TD
+  A[Usuario] --> B[Frontend MVC PHP]
+  B --> C[Backend Monolito]
+  C --> D[Base de Datos Mongo Atlas]
+  C --> E[DIAN]
+```
+
+---
+
+### Diagrama Propuesta - Estupendo 2.0
+
+```mermaid
+graph TD
+  A[Cliente Web/Móvil] -->|HTTPS| B[CloudFront + WAF]
+  B --> C[S3 - Angular SPA]
+  B --> D[ALB - gRPC Gateway]
+  D --> E1[Microservicio Emisión]
+  D --> E2[Microservicio Recepción]
+  D --> E3[Microservicio Nómina]
+  D --> E4[Microservicio Reportes]
+  D --> E5[Microservicio Configuración]
+  E1 --> F[Mongo Atlas]
+  E2 --> F
+  E3 --> F
+  E4 --> F
+  E5 --> F
+  D --> G[ElastiCache Redis]
+  G --> F
+```
+
+---
+
+## 5. Matriz de Microservicios
+
+| Microservicio | Lenguaje | Función | Comunicación | Dependencias |
+|---------------|----------|---------|--------------|--------------|
+| Emisión | Node.js | Crear y enviar facturas | gRPC | MongoDB, Email |
+| Recepción | Python | Recibir y validar documentos | gRPC | MongoDB |
+| Nómina | Node.js | Generar pagos de empleados | gRPC | MongoDB |
+| Configuración | Python | Parametrización del sistema | gRPC | Secrets Manager |
+| Reportes | Node.js | Generación de dashboards | REST/gRPC | MongoDB |
+
+---
+
+## 6. Recursos AWS Involucrados
+
+```mermaid
+flowchart LR
+  subgraph Red
+    ALB --> ECS
+    ECS --> Mongo[Mongo Atlas]
+    ECS --> S3
+    ECS --> Redis[ElastiCache]
+  end
+  subgraph CI/CD
+    CodeCommit --> CodeBuild --> CodePipeline --> ECS
+  end
+  Route53 --> CloudFront --> ALB
+  CloudFront --> S3
+  CloudWatch --> ECS
+  SecretsManager --> ECS
+  ACM --> ALB
+```
+
+---
+
+
