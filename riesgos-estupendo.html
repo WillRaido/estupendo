@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-UTF-8">
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Análisis Interactivo: Modernización Estupendo</title>
+    <title>Análisis Interactivo: Modernización Estupendo - Realizado por Ismary Lara</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Visualization & Content Choices: 
@@ -204,7 +204,7 @@
                     <li><strong>Amazon CloudFront:</strong> CDN global para baja latencia y reducción de carga.</li>
                     <li><strong>AWS WAF:</strong> Seguridad perimetral contra vulnerabilidades web comunes.</li>
                     <li><strong>Amazon Route 53:</strong> Gestión de DNS.</li>
-                    <li><strong>AWS Certificate Manager (ACM):</strong> Gestión de certificados SSL/TLS para HTTPS.</li>
+                    <li><strong>AWS Certificate Manager (ACM)::</strong> Gestión de certificados SSL/TLS para HTTPS.</li>
                 </ul>
                 <p class="mt-2">Los frontends consumirán servicios backend a través de APIs (BFFs - Backend for Frontends), que a su vez interactuarán con microservicios gRPC. Se necesitan clarificaciones sobre las responsabilidades y la implementación de los BFFs.</p>
                 <p class="mt-2">Se consideran estrategias de autenticación/autorización diferenciadas, posiblemente con Amazon Cognito.</p>
@@ -429,12 +429,30 @@
                 </div>
 
                 <div class="accordion-header">
-                    <span>7. Estrategia de Autenticación y Autorización para Múltiples Frontends</span>
+                    <span>7. Riesgos de la Reescritura Completa de la Lógica de Negocio</span>
                     <span class="accordion-icon"></span>
                 </div>
                 <div class="accordion-content">
-                    <p><strong>Problema:</strong> Dos aplicaciones Angular distintas (clientes y administración) requieren una solución IAM robusta y flexible.</p>
-                    <p><strong>Recomendación:</strong> Detallar cómo se gestionará autenticación/autorización para diferentes tipos de usuarios (tecnología: Cognito, OAuth 2.0, OIDC), gestión de SSO, integración con proveedores de identidad existentes.</p>
+                    <p><strong>Problema:</strong> La transición de PHP a Python/Node.js implica una reescritura completa de la lógica de negocio de los "controladores gordos" existentes. Esto conlleva riesgos de nuevas incidencias, retrasos en los plazos y dificultad para asegurar la paridad funcional con el sistema legado, especialmente si la lógica de negocio no está bien documentada.</p>
+                    <p><strong>Recomendación:</strong> La fábrica de software debe contar con una estrategia robusta para gestionar esta reescritura, asegurar la paridad de funcionalidades y planificar una migración por fases para minimizar cualquier interrupción operativa. La capacidad de identificar y extraer capacidades de negocio distintas de estos controladores existentes para formar microservicios verdaderamente independientes será fundamental para evitar la creación de un "monolito distribuido".</p>
+                </div>
+
+                <div class="accordion-header">
+                    <span>8. Falta de Detalle en Pruebas de Rendimiento y Carga</span>
+                    <span class="accordion-icon"></span>
+                </div>
+                <div class="accordion-content">
+                    <p><strong>Problema:</strong> Aunque se mencionan requisitos críticos como el procesamiento de "dos millones de documentos mensuales" y la "disponibilidad en menos de cinco segundos", el anexo no detalla cómo se validarán estos requisitos en la nueva arquitectura. No hay mención explícita de pruebas de rendimiento, carga o estrés para asegurar que la solución cumpla con estas expectativas bajo condiciones de producción.</p>
+                    <p><strong>Recomendación:</strong> La fábrica de software debe presentar un plan de pruebas no funcionales que incluya pruebas de rendimiento, carga y estrés, así como los criterios de éxito y las herramientas a utilizar. Esto es crucial para validar que la nueva arquitectura puede soportar los volúmenes de datos y los requisitos de latencia esperados.</p>
+                </div>
+
+                <div class="accordion-header">
+                    <span>9. Plan de Desactivación del Sistema Legado y Coexistencia</span>
+                    <span class="accordion-icon"></span>
+                </div>
+                <div class="accordion-content">
+                    <p><strong>Problema:</strong> No se aborda explícitamente cómo se realizará la transición del sistema PHP MVC existente. La falta de un plan claro para la desactivación o coexistencia puede introducir complejidades operativas y desafíos de sincronización de datos.</p>
+                    <p><strong>Recomendación:</strong> Se requiere un plan de migración detallado que aborde la coexistencia entre el sistema actual y el nuevo, la estrategia de migración de datos históricos (si aplica), y cómo se gestionarán los usuarios durante la transición. Esto incluye considerar estrategias como el "Strangler Fig Pattern" para una migración gradual.</p>
                 </div>
             </div>
         </section>
