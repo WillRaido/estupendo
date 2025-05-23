@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análisis Interactivo: Modernización Estupendo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Visualization & Content Choices: 
+        Report Info: General project overview. Goal: Orient user. Viz/Method: Text summary. Interaction: None. Justification: Standard intro.
+        Report Info: Details of v1.0 architecture (modules, MVC, AWS services). Goal: Understand current state. Viz/Method: Structured text, lists, HTML-based diagrams for component relations. Interaction: Tabs/accordions for sub-sections. Justification: Organize dense info.
+        Report Info: Details of v2.0 architecture (objectives, frontend, backend, data, DevOps, security, UX/API). Goal: Understand proposed state. Viz/Method: Structured text, lists, HTML-based diagrams for layers (Frontend->BFF->Microservices). Interaction: Tabs/accordions. Justification: Organize complex info.
+        Report Info: Table comparing v1.0 and v2.0 components. Goal: Compare directly. Viz/Method: Interactive HTML table. Interaction: Reading. Justification: Direct comparison.
+        Report Info: Key architectural components/services for v2.0. Goal: Illustrate distribution. Viz/Method: Chart.js Doughnut chart (conceptual: 'Distribución de Componentes en Estupendo 2.0'). Interaction: Hover for tooltips. Justification: Visual summary of new architecture's composition. Library: Chart.js (Canvas).
+        Report Info: CI/CD process. Goal: Understand DevOps flow. Viz/Method: HTML/CSS based flow diagram. Interaction: None. Justification: Visual representation of process.
+        Report Info: Critical questions/recommendations from analysis. Goal: Deepen understanding of challenges. Viz/Method: Interactive list of questions; clicking reveals context/details. Interaction: Click to expand. Justification: Focus on key decision points and risks.
+        CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. All diagrams are HTML/CSS based or Chart.js (Canvas). -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-link {
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.3s, color 0.3s;
+            cursor: pointer;
+        }
+        .nav-link:hover, .nav-link.active {
+            background-color: #0284c7; /* sky-600 */
+            color: white;
+        }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .tab-button {
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem 0.375rem 0 0;
+            cursor: pointer;
+            background-color: #e0f2fe; /* sky-100 */
+            color: #0c4a6e; /* sky-800 */
+            border: 1px solid #bae6fd; /* sky-200 */
+            border-bottom: none;
+        }
+        .tab-button.active {
+            background-color: #0ea5e9; /* sky-500 */
+            color: white;
+            border-color: #0ea5e9; /* sky-500 */
+        }
+        .tab-content { display: none; padding: 1rem; border: 1px solid #bae6fd; border-radius: 0 0 0.375rem 0.375rem;}
+        .tab-content.active { display: block; }
+        .accordion-header {
+            cursor: pointer;
+            padding: 0.75rem;
+            background-color: #f0f9ff; /* sky-50 */
+            border: 1px solid #e0f2fe; /* sky-100 */
+            border-radius: 0.375rem;
+            margin-bottom: 0.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .accordion-header:hover { background-color: #e0f2fe; }
+        .accordion-content {
+            display: none;
+            padding: 0.75rem;
+            border: 1px solid #e0f2fe;
+            border-top: none;
+            border-radius: 0 0 0.375rem 0.375rem;
+        }
+        .accordion-icon::before { content: '▼'; font-size: 0.8em; }
+        .accordion-header.active .accordion-icon::before { content: '▲'; }
+        h2 { font-size: 1.75rem; font-weight: 600; color: #0369a1; /* sky-700 */ margin-bottom: 1rem; }
+        h3 { font-size: 1.25rem; font-weight: 600; color: #075985; /* sky-800 */ margin-top: 1rem; margin-bottom: 0.5rem; }
+        p, li { color: #334155; /* slate-700 */ line-height: 1.6; }
+        .card { background-color: white; border-radius: 0.5rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); padding: 1.5rem; margin-bottom: 1rem; }
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #e2e8f0; /* slate-200 */ padding: 0.75rem; text-align: left; }
+        th { background-color: #f1f5f9; /* slate-100 */ color: #1e293b; /* slate-800 */ }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Example max-width */
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px; /* Base height */
+            max-height: 400px; /* Max height */
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-3 flex flex-wrap justify-between items-center">
+            <h1 class="text-2xl font-bold text-sky-700">Modernización Aplicativo Estupendo</h1>
+            <div class="flex flex-wrap space-x-1 md:space-x-4 mt-2 md:mt-0" id="navLinks">
+                <a class="nav-link active" data-target="inicio">Inicio</a>
+                <a class="nav-link" data-target="arquitectura-actual">Arq. Actual (v1.0)</a>
+                <a class="nav-link" data-target="arquitectura-propuesta">Arq. Propuesta (v2.0)</a>
+                <a class="nav-link" data-target="comparativa">Comparativa</a>
+                <a class="nav-link" data-target="puntos-criticos">Puntos Críticos</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-8">
+        <section id="inicio" class="content-section active card">
+            <h2>Bienvenido al Análisis Interactivo</h2>
+            <p>Esta aplicación te guiará a través del Anexo Técnico para la modernización del aplicativo "Estupendo". El objetivo es transformar la plataforma actual Esdinamico SAS v1.0 hacia Estupendo 2.0, optimizando la experiencia de usuario, mejorando la escalabilidad y eficiencia, y automatizando la comunicación con clientes mediante APIs y una arquitectura de microservicios en AWS.</p>
+            <p class="mt-2">Explora las diferentes secciones utilizando la navegación para comprender la arquitectura actual, la visión de futuro, las tecnologías implicadas y los puntos clave de análisis.</p>
+        </section>
+
+        <section id="arquitectura-actual" class="content-section card">
+            <h2>Arquitectura Actual: Esdinamico SAS v1.0</h2>
+            <p>La plataforma actual de Esdinamico SAS v1.0 se centra en el procesamiento de documentos electrónicos de facturación y nómina. Está basada en un modelo MVC en PHP y ya utiliza varios servicios de AWS. Esta sección detalla sus componentes, funcionalidades y contexto operativo.</p>
+            
+            <div id="actual-tabs" class="mt-4">
+                <button class="tab-button active" data-target="actual-modulos">Módulos Funcionales</button>
+                <button class="tab-button" data-target="actual-componentes">Componentes MVC</button>
+                <button class="tab-button" data-target="actual-despliegue">Despliegue y AWS</button>
+                <button class="tab-button" data-target="actual-datos-seguridad">Datos y Seguridad</button>
+            </div>
+
+            <div id="actual-modulos" class="tab-content active">
+                <h3>1.1. Módulos Funcionales y Sus Interdependencias</h3>
+                <p>La arquitectura lógica se organiza en tres módulos principales:</p>
+                <ul>
+                    <li><strong>Emisión:</strong> Gestión de creación, anulación, edición y seguimiento de facturas electrónicas. Incluye submódulos de Configuración, Panel Administrativo, Estadísticas, Gestión de Documentos, Documentos Enviados y Reportes.</li>
+                    <li><strong>Recepción:</strong> Administración y control de documentos electrónicos y físicos recibidos. Incluye submódulos de Configuración, Panel Administrativo (compartido con Emisión), Estadísticas, Cargar documentos, Bandeja de Entrada y Reportes.</li>
+                    <li><strong>Nómina:</strong> Herramientas para generación de soportes de pago y gestión de nómina. Incluye submódulos de Configuración, Gestión de Nómina y Reportes.</li>
+                </ul>
+                <p class="mt-2">La interconexión de paneles administrativos sugiere una naturaleza monolítica o acoplamiento significativo.</p>
+            </div>
+            <div id="actual-componentes" class="tab-content">
+                <h3>1.2. Desglose a Nivel de Componentes (Modelo MVC)</h3>
+                <p>Desarrollada en PHP con patrón MVC, se desglosa en:</p>
+                <ul>
+                    <li><strong>Módulo de Manejo de Perfiles:</strong> Creación, actualización y gestión de perfiles de usuario.</li>
+                    <li><strong>Módulo de Emisión:</strong> Generación y emisión de documentos electrónicos (facturas, notas). Utiliza controladores como `ApiController`, `Attach Document`, `Email Utilities`, `Radiant Controller`.</li>
+                    <li><strong>Módulo de Recepción:</strong> Gestión de documentos recibidos. Interfaces como `ApiRac Controller`, `Documentarse Controller`.</li>
+                    <li><strong>Módulo de Nómina:</strong> Procesamiento de pagos de nómina. Interfaces como `Nómina ApiController`, `Ajuste Nómina ApiController`.</li>
+                </ul>
+                <p class="mt-2">La existencia de "controladores gordos" con múltiples responsabilidades es una característica de esta arquitectura monolítica.</p>
+            </div>
+            <div id="actual-despliegue" class="tab-content">
+                <h3>1.3. Huella de Despliegue Existente y Servicios AWS Utilizados</h3>
+                <p>La plataforma ya utiliza servicios de AWS como:</p>
+                <ul>
+                    <li>Application Load Balancer (ALB)</li>
+                    <li>Instancias EC2 (alojando contenedores, backend y lógica de negocio)</li>
+                    <li>ECS (Elastic Container Service) para tareas específicas</li>
+                    <li>S3 (Simple Storage Service) para archivos estáticos</li>
+                    <li>CloudWatch para monitoreo</li>
+                    <li>Roles de IAM</li>
+                    <li>CodePipeline, CodeCommit, CodeBuild, CloudFormation (para CI/CD e IaC)</li>
+                    <li>SNS y SQS para notificaciones y tareas asíncronas</li>
+                    <li>Secrets Manager</li>
+                    <li>Route 53 para DNS</li>
+                </ul>
+                <p class="mt-2">La presencia de CI/CD e IaC es una base sólida, aunque hay ambigüedad sobre su uso en el nuevo proyecto.</p>
+            </div>
+            <div id="actual-datos-seguridad" class="tab-content">
+                <h3>1.4. Gestión de Datos y Visión General de Seguridad</h3>
+                <p>El Gestor de Datos es responsable del almacenamiento, organización y gestión de la información de documentos electrónicos. Utiliza MongoDB (probablemente Atlas, ya que se mantendrá).</p>
+                <p>Seguridad actual: Autenticación, cifrado "en tránsito y en reposo" (detalle específico: "encriptación de contraseñas con Hash").</p>
+                <p class="mt-2">La falta de detalles sobre el cifrado de todos los datos sensibles (más allá de contraseñas) es una brecha a considerar para datos financieros y de nómina.</p>
+            </div>
+        </section>
+
+        <section id="arquitectura-propuesta" class="content-section card">
+            <h2>Arquitectura Propuesta: Estupendo 2.0</h2>
+            <p>Estupendo 2.0 busca una transformación hacia una arquitectura desacoplada de microservicios nativa en AWS, con énfasis en la experiencia de usuario (UX) mediante Design Thinking. Esta sección detalla la visión arquitectónica, tecnologías y beneficios esperados.</p>
+
+            <div id="propuesta-tabs" class="mt-4">
+                <button class="tab-button active" data-target="propuesta-objetivos">Objetivos y Beneficios</button>
+                <button class="tab-button" data-target="propuesta-frontend">Frontend</button>
+                <button class="tab-button" data-target="propuesta-backend">Backend</button>
+                <button class="tab-button" data-target="propuesta-datos">Datos y Caché</button>
+                <button class="tab-button" data-target="propuesta-devops">DevOps y Observabilidad</button>
+                <button class="tab-button" data-target="propuesta-seguridad">Seguridad</button>
+                <button class="tab-button" data-target="propuesta-ux-api">UX y APIs</button>
+            </div>
+
+            <div id="propuesta-objetivos" class="tab-content active">
+                <h3>2.1. Objetivos Estratégicos y Beneficios</h3>
+                <p>Objetivos: Escalabilidad, optimización UX, flexibilidad.</p>
+                <p>Beneficios esperados:</p>
+                <ul>
+                    <li>Escalabilidad granular y resiliencia con AWS.</li>
+                    <li>Agilidad en desarrollo y despliegue.</li>
+                    <li>Eficiencia en comunicación interna con gRPC.</li>
+                    <li>Contratos de servicio fuertes.</li>
+                </ul>
+                 <p class="mt-2">Se espera un "Anexo Figma UX Estupendo 2.0" para detallar la experiencia visual y de interacción.</p>
+            </div>
+            <div id="propuesta-frontend" class="tab-content">
+                <h3>2.2. Arquitectura Frontend: Angular en AWS</h3>
+                <p>Se implementarán aplicaciones frontend Angular distintas y autónomas para especializar la UX.</p>
+                <p>Servicios AWS para Frontend:</p>
+                <ul>
+                    <li><strong>Amazon S3:</strong> Alojamiento de artefactos estáticos (HTML, CSS, JS).</li>
+                    <li><strong>Amazon CloudFront:</strong> CDN global para baja latencia y reducción de carga.</li>
+                    <li><strong>AWS WAF:</strong> Seguridad perimetral contra vulnerabilidades web comunes.</li>
+                    <li><strong>Amazon Route 53:</strong> Gestión de DNS.</li>
+                    <li><strong>AWS Certificate Manager (ACM):</strong> Gestión de certificados SSL/TLS para HTTPS.</li>
+                </ul>
+                <p class="mt-2">Los frontends consumirán servicios backend a través de APIs (BFFs - Backend for Frontends), que a su vez interactuarán con microservicios gRPC. Se necesitan clarificaciones sobre las responsabilidades y la implementación de los BFFs.</p>
+                <p class="mt-2">Se consideran estrategias de autenticación/autorización diferenciadas, posiblemente con Amazon Cognito.</p>
+            </div>
+            <div id="propuesta-backend" class="tab-content">
+                <h3>2.3. Arquitectura Backend: Microservicios con gRPC en AWS</h3>
+                <p>Núcleo transformado a microservicios con gRPC para comunicación interna.</p>
+                <p>Servicios AWS para Backend:</p>
+                <ul>
+                    <li><strong>Descomposición Modular en Microservicios:</strong> Lista de microservicios será un "archivo vivo".</li>
+                    <li><strong>Amazon VPC:</strong> Entorno de red aislado con subredes públicas y privadas.</li>
+                    <li><strong>Application Load Balancer (ALB):</strong> Punto de entrada para gRPC, balanceo y terminación SSL.</li>
+                    <li><strong>Capa de Cómputo (EC2 / ECS / Fargate):</strong> Contenedores Docker gestionados por ECS.</li>
+                    <li><strong>AWS Auto Scaling:</strong> Escalado automático de instancias/contenedores.</li>
+                    <li><strong>Amazon ElastiCache for Redis:</strong> Caché en memoria para consultas, sesiones, rate limiting, y potencialmente broker ligero.</li>
+                    <li><strong>AWS IAM:</strong> Permisos granulares.</li>
+                    <li><strong>Amazon CloudWatch:</strong> Logs, métricas y alarmas.</li>
+                </ul>
+                <p class="mt-2">Riesgo: La falta de un plan detallado de descomposición de microservicios puede llevar a un "monolito distribuido". Se necesita claridad en la metodología de descomposición y límites de servicio.</p>
+                <p class="mt-2">Se mencionan estrategias de consistencia de datos (sagas, eventos), pero requieren detalle en implementación y manejo de errores.</p>
+            </div>
+            <div id="propuesta-datos" class="tab-content">
+                <h3>2.4. Estrategia de Persistencia de Datos y Caché</h3>
+                <p><strong>Base de Datos Principal:</strong> Mongo Atlas (servicio NoSQL gestionado externamente), integrado con VPC de AWS. Se mantendrá la configuración actual, optimizando consultas.</p>
+                <p><strong>Caché:</strong> Amazon ElastiCache for Redis para consultas frecuentes, sesiones de usuario, contadores (rate limiting) y potencialmente como broker de mensajes ligero.</p>
+                <p class="mt-2">Desafío: Mantener una instancia única de MongoDB compartida entre microservicios sin una clara partición y propiedad de datos puede limitar la independencia de los servicios (riesgo de "base de datos compartida").</p>
+                <p class="mt-2">Se debe clarificar el uso de Redis como broker de mensajes frente a SQS/SNS.</p>
+            </div>
+            <div id="propuesta-devops" class="tab-content">
+                <h3>2.5. DevOps, CI/CD y Marco de Observabilidad</h3>
+                <p>Énfasis en automatización, entrega continua y monitoreo.</p>
+                <ul>
+                    <li><strong>CI/CD Frontend:</strong> Github Actions para construir y desplegar Angular en S3, invalidar caché en CloudFront.</li>
+                    <li><strong>CI/CD Backend:</strong> Herramientas para construir imágenes Docker y desplegar en ECS.</li>
+                    <li><strong>Ambigüedad CI/CD:</strong> Mención de AWS CodeSuite (existente) y Github Actions (propuesto). Necesita unificación o justificación clara.</li>
+                    <li><strong>Infraestructura como Código (IaC):</strong> CloudFormation.</li>
+                    <li><strong>Observabilidad:</strong> Amazon CloudWatch para logs, métricas y alarmas.</li>
+                </ul>
+                <p class="mt-2">Limitación: CloudWatch básico es insuficiente para microservicios. Se necesita rastreo distribuido (ej. AWS X-Ray) y APM para observabilidad profunda.</p>
+                <p class="mt-2">Calidad de código: SonarQube.</p>
+            </div>
+            <div id="propuesta-seguridad" class="tab-content">
+                <h3>2.6. Medidas de Seguridad y Cumplimiento Mejoradas</h3>
+                <p>Módulo de seguridad dedicado para proteger información, controlar acceso y detectar intrusiones.</p>
+                <ul>
+                    <li><strong>Autenticación API:</strong> JWT, API Keys.</li>
+                    <li><strong>Encriptación:</strong> HTTPS para todas las comunicaciones.</li>
+                    <li><strong>Rate Limiting:</strong> Propuesta de 1000 req/min/cliente (necesita validación y flexibilidad).</li>
+                    <li><strong>Control de Acceso:</strong> Doble autenticación, módulo transversal de control de acceso, gestión de roles y perfiles.</li>
+                </ul>
+                <p>Servicios de Seguridad AWS:</p>
+                <ul>
+                    <li>IAM, Secrets Manager / Parameter Store, AWS WAF, Grupos de Seguridad VPC y NACLs, ACM.</li>
+                </ul>
+                <p class="mt-2">Preocupaciones: Rate limiting fijo es insuficiente para protección DDoS integral. Necesidad de detalles concretos sobre cifrado de *todos* los datos sensibles en reposo (MongoDB, S3, EBS) y gestión de claves (AWS KMS), no solo hashing de contraseñas.</p>
+            </div>
+            <div id="propuesta-ux-api" class="tab-content">
+                <h3>2.7. Experiencia de Usuario (UX) y Estrategia de API</h3>
+                <p>UX: Diseño Centrado en el Humano (Design Thinking, personas, user journeys, prototipos Figma, pruebas de usabilidad). Consolidado en "Anexo Figma UX Estupendo 2.0".</p>
+                <p>APIs RESTful propuestas:</p>
+                <ul>
+                    <li>Facturación (`GET /api/facturas`, `POST /api/facturas`)</li>
+                    <li>Pagos (`GET /api/pagos`)</li>
+                    <li>Reportes de Flujo de Caja (`GET /api/reportes/flujo-de-caja`)</li>
+                    <li>Notificaciones (`POST /api/notificaciones`)</li>
+                </ul>
+                <p>Webhooks para retroalimentación automática (Factura Autorizada, Pago Registrado, etc.).</p>
+                <p>Documentación API: Swagger/OpenAPI.</p>
+                <p>Mejoras propuestas a módulos existentes (Emisión, Recepción, Nómina, Reportes, Configuración, etc.) mediante migración a microservicios y nuevas APIs.</p>
+                <div class="mt-4 p-4 bg-sky-50 rounded-lg">
+                    <h4 class="font-semibold text-sky-700">Visualización Conceptual: Distribución de Componentes en Estupendo 2.0</h4>
+                    <p class="text-sm text-slate-600 mb-2">Este gráfico de dona muestra una estimación de la composición de la nueva arquitectura.</p>
+                    <div class="chart-container">
+                        <canvas id="componentDistributionChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparativa" class="content-section card">
+            <h2>Comparativa: Arquitectura Actual vs. Propuesta</h2>
+            <p>Esta tabla resume los cambios clave entre Esdinamico SAS v1.0 y la propuesta para Estupendo 2.0, destacando la evolución tecnológica y arquitectónica.</p>
+            <div class="table-container mt-4">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Categoría</th>
+                            <th>Estado Actual (Esdinamico SAS v1.0)</th>
+                            <th>Estado Propuesto (Estupendo 2.0)</th>
+                            <th>Cambios Clave / Racional</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Arquitectura de Aplicación</strong></td>
+                            <td>Monolito MVC</td>
+                            <td>Microservicios</td>
+                            <td>Desacoplamiento para escalabilidad granular, agilidad y resiliencia.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Framework Frontend</strong></td>
+                            <td>N/A (Web monolítica)</td>
+                            <td>Angular (Múltiples aplicaciones)</td>
+                            <td>Especialización de la experiencia de usuario, desarrollo independiente.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Lenguaje/Framework Backend</strong></td>
+                            <td>PHP</td>
+                            <td>Python / Node.js</td>
+                            <td>Reescritura para optimización de rendimiento y flexibilidad tecnológica.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Base de Datos Principal</strong></td>
+                            <td>MongoDB (en EC2/Monolito)</td>
+                            <td>MongoDB Atlas (gestionado externamente, integrado con VPC)</td>
+                            <td>Mantenimiento de la tecnología NoSQL, mejora de la gestión y seguridad.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Caché</strong></td>
+                            <td>N/A (Implícito en DB/Monolito)</td>
+                            <td>Amazon ElastiCache for Redis</td>
+                            <td>Acelerar acceso a datos, gestión de sesiones, rate limiting.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CI/CD</strong></td>
+                            <td>AWS CodeSuite (CodePipeline, CodeCommit, CodeBuild, CloudFormation)</td>
+                            <td>Github Actions / AWS CodeSuite (a definir)</td>
+                            <td>Automatización de despliegues, potencialmente un cambio de plataforma CI/CD.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Infraestructura como Código (IaC)</strong></td>
+                            <td>CloudFormation</td>
+                            <td>CloudFormation</td>
+                            <td>Gestión programática de la infraestructura.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Balanceo de Carga</strong></td>
+                            <td>Application Load Balancer (ALB)</td>
+                            <td>Application Load Balancer (ALB)</td>
+                            <td>Punto de entrada único para solicitudes, soporte gRPC nativo.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>CDN / Perímetro de Seguridad</strong></td>
+                            <td>N/A</td>
+                            <td>Amazon CloudFront con AWS WAF</td>
+                            <td>Reducción de latencia global, protección contra ataques web.</td>
+                        </tr>
+                         <tr>
+                            <td><strong>Comunicación Interna Backend</strong></td>
+                            <td>Llamadas directas / PHP MVC</td>
+                            <td>gRPC</td>
+                            <td>Comunicación de alta eficiencia entre microservicios.</td>
+                        </tr>
+                        <tr>
+                            <td><strong>APIs Expuestas a Clientes</strong></td>
+                            <td>RESTful (implícito)</td>
+                            <td>RESTful (propuestas nuevas APIs)</td>
+                            <td>Interacción programática con la plataforma.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="puntos-criticos" class="content-section card">
+            <h2>Puntos Críticos y Recomendaciones Clave</h2>
+            <p>El análisis del anexo técnico revela varios puntos que requieren mayor clarificación y un plan de acción detallado por parte de la fábrica de software para mitigar riesgos y asegurar el éxito del proyecto. Haz clic en cada punto para ver más detalles.</p>
+            
+            <div id="accordionContainer" class="mt-4">
+                <div class="accordion-header">
+                    <span>1. Clarificación de la Estrategia de Descomposición de Microservicios</span>
+                    <span class="accordion-icon"></span>
+                </div>
+                <div class="accordion-content">
+                    <p><strong>Problema:</strong> La descripción de módulos actuales y controladores PHP con amplias responsabilidades sugiere acoplamiento. La transición a microservicios necesita una metodología explícita para delimitar contextos de negocio y responsabilidades.</p>
+                    <p><strong>Recomendación:</strong> La fábrica de software debe presentar un plan detallado de descomposición que vaya más allá de un "archivo vivo". Incluir diagramas de contexto, límites de responsabilidad, estrategias para evitar acoplamiento (ej. no compartir BD directamente) y cómo se refactorizará la lógica de negocio de los "controladores gordos".</p>
+                </div>
+
+                <div class="accordion-header">
+                    <span>2. Estrategia de Consistencia de Datos en Entorno Distribuido</span>
+                    <span class="accordion-icon"></span>
+                </div>
+                <div class="accordion-content">
+                    <p><strong>Problema:</strong> "Sagas y eventos" es un buen inicio, pero la implementación de transacciones distribuidas es compleja. Mantener MongoDB Atlas compartido sin particionamiento claro puede llevar a un "monolito de datos".</p>
+                    <p><strong>Recomendación:</strong> Explicar detalladamente la implementación de sagas/eventos (orquestación vs. coreografía), manejo de consistencia eventual, compensación de transacciones fallidas, idempotencia. Definir estrategia de propiedad de datos en MongoDB Atlas (¿BD/colecciones separadas por servicio? ¿Gestión de evolución de esquema?).</p>
+                </div>
+                
+                <div class="accordion-header">
+                    <span>3. Consolidación y Madurez de la Estrategia de CI/CD</span>
+                    <span class="accordion-icon"></span>
+                </div>
+                <div class="accordion-content">
+                    <p><strong>Problema:</strong> Coexistencia de AWS CodeSuite y propuesta de Github Actions introduce ambigüedad y riesgo de "dispersión de herramientas".</p>
+                    <p><strong>Recomendación:</strong> Definir una estrategia de CI/CD unificada y clara. Si se combinan herramientas, justificar y detallar orquestación, secretos, permisos y estandarización de pipelines.</p>
+                </div>
+
+                <div class="accordion-header">
+                    <span>4. Profundización en la Estrategia de Observabilidad</span>
+                    <span class="accordion-icon"></span>
+                </div>
+                <div class="accordion-content">
+                    <p><strong>Problema:</strong> CloudWatch básico es insuficiente para la complejidad de microservicios.</p>
+                    <p><strong>Recomendación:</strong> Detallar planes para implementar rastreo distribuido (ej. AWS X-Ray, OpenTelemetry) y soluciones APM. Son cruciales para entender flujos de extremo a extremo, identificar cuellos de botella y diagnosticar problemas.</p>
+                </div>
+
+                <div class="accordion-header">
+                    <span>5. Detalles Concretos de Seguridad para Datos Sensibles</span>
+                    <span class="accordion-icon"></span>
+                </div>
+                <div class="accordion-content">
+                    <p><strong>Problema:</strong> Afirmaciones sobre cifrado "en tránsito y en reposo" carecen de detalles más allá de hashing de contraseñas. Crítico para datos financieros/nómina (DIAN).</p>
+                    <p><strong>Recomendación:</strong> Plan detallado sobre cifrado de *todos* los datos sensibles en reposo (MongoDB, S3, EBS), mecanismos, gestión de claves (AWS KMS), clasificación de datos. Clarificar estrategia de rate limiting y defensa DDoS.</p>
+                </div>
+
+                <div class="accordion-header">
+                    <span>6. Definición de la Capa de Backend for Frontends (BFF)</span>
+                    <span class="accordion-icon"></span>
+                </div>
+                <div class="accordion-content">
+                    <p><strong>Problema:</strong> BFFs como intermediarios entre frontends Angular y microservicios gRPC añaden complejidad que debe ser bien definida.</p>
+                    <p><strong>Recomendación:</strong> Especificar responsabilidades claras de los BFFs (agregación/transformación de datos, lógica frontend, autenticación/autorización), cómo se implementarán y cómo se gestionarán cuellos de botella o puntos únicos de fallo.</p>
+                </div>
+
+                <div class="accordion-header">
+                    <span>7. Estrategia de Autenticación y Autorización para Múltiples Frontends</span>
+                    <span class="accordion-icon"></span>
+                </div>
+                <div class="accordion-content">
+                    <p><strong>Problema:</strong> Dos aplicaciones Angular distintas (clientes y administración) requieren una solución IAM robusta y flexible.</p>
+                    <p><strong>Recomendación:</strong> Detallar cómo se gestionará autenticación/autorización para diferentes tipos de usuarios (tecnología: Cognito, OAuth 2.0, OIDC), gestión de SSO, integración con proveedores de identidad existentes.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="text-center py-8 text-sm text-slate-500">
+        <p>Aplicación generada para el análisis interactivo del Anexo Técnico: Modernización Estupendo.</p>
+        <p>&copy; 2025. Basado en el documento proporcionado.</p>
+    </footer>
+
+    <script>
+        const navLinks = document.querySelectorAll('.nav-link');
+        const contentSections = document.querySelectorAll('.content-section');
+        const accordionHeaders = document.querySelectorAll('.accordion-header');
+
+        // Navigation
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                const targetId = link.getAttribute('data-target');
+                
+                navLinks.forEach(navLink => navLink.classList.remove('active'));
+                link.classList.add('active');
+                
+                contentSections.forEach(section => {
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // Tabs
+        function setupTabs(containerId) {
+            const tabContainer = document.getElementById(containerId);
+            if (!tabContainer) return;
+
+            const tabButtons = tabContainer.querySelectorAll('.tab-button');
+            const tabContents = tabContainer.parentElement.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const targetId = button.getAttribute('data-target');
+                    
+                    tabButtons.forEach(btn => btn.classList.remove('active'));
+                    button.classList.add('active');
+                    
+                    tabContents.forEach(content => {
+                        if (content.id === targetId) {
+                            content.classList.add('active');
+                        } else {
+                            content.classList.remove('active');
+                        }
+                    });
+                });
+            });
+        }
+
+        setupTabs('actual-tabs');
+        setupTabs('propuesta-tabs');
+        
+        // Accordion
+        accordionHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                const content = header.nextElementSibling;
+                header.classList.toggle('active');
+                if (content.style.display === "block") {
+                    content.style.display = "none";
+                } else {
+                    content.style.display = "block";
+                }
+            });
+        });
+
+        // Chart.js Doughnut Chart
+        const ctx = document.getElementById('componentDistributionChart');
+        if (ctx) {
+            const componentData = {
+                labels: ['Aplicaciones Frontend (Angular)', 'BFFs', 'Microservicios Core (gRPC)', 'Servicios de Plataforma AWS'],
+                datasets: [{
+                    label: 'Distribución Estimada de Componentes en Estupendo 2.0',
+                    data: [2, 2, 10, 15], // Datos de ejemplo, ajustar según análisis más profundo
+                    backgroundColor: [
+                        'rgba(54, 162, 235, 0.8)', // sky-500
+                        'rgba(255, 159, 64, 0.8)', // orange-500
+                        'rgba(75, 192, 192, 0.8)',  // teal-500
+                        'rgba(153, 102, 255, 0.8)' // purple-500
+                    ],
+                    borderColor: [
+                        'rgb(54, 162, 235)',
+                        'rgb(255, 159, 64)',
+                        'rgb(75, 192, 192)',
+                        'rgb(153, 102, 255)'
+                    ],
+                    borderWidth: 1
+                }]
+            };
+            const chartConfig = {
+                type: 'doughnut',
+                data: componentData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                color: '#334155', // slate-700
+                                padding: 10
+                            }
+                        },
+                        title: { 
+                            display: false, 
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.7)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            padding: 10,
+                            cornerRadius: 4
+                        }
+                    }
+                }
+            };
+            new Chart(ctx, chartConfig);
+        }
+    </script>
+</body>
+</html>
